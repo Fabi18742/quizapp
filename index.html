@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App - Übersicht</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Quiz Sammlung</h1>
+        </header>
+
+        <main>
+            <div class="actions">
+                <button id="createNewQuiz" class="btn btn-primary">
+                    <span class="btn-icon">+</span>
+                    Neues Quiz erstellen
+                </button>
+            </div>
+
+            <div id="quizList" class="quiz-list">
+                <!-- Quizzes werden hier dynamisch eingefügt -->
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <p>Noch keine Quizzes vorhanden.</p>
+                <p>Erstelle dein erstes Quiz und leg los!</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/index.js"></script>
+</body>
+
+</html>

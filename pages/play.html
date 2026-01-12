@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz spielen</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>    <div class="container">
+        <header>
+            <h1 id="quizTitle">Quiz</h1>
+            <a href="../index.html" class="btn btn-secondary">
+                <span class="btn-icon">←</span>
+                Zurück
+            </a>
+        </header>
+
+        <main>
+            <!-- Quiz-Spiel -->
+            <div id="quizGame" class="quiz-game">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                
+                <div class="question-info">
+                    <span id="questionCounter">Frage 1 von 10</span>
+                </div>
+
+                <div id="questionContainer" class="question-container">
+                    <!-- Frage wird hier angezeigt -->
+                </div>
+
+                <div id="answersContainer" class="answers-container">
+                    <!-- Antworten werden hier angezeigt -->
+                </div>                <div class="navigation-buttons">
+                    <button id="nextBtn" class="btn btn-primary">
+                        Weiter
+                        <span class="btn-icon">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ergebnis -->
+            <div id="resultScreen" class="result-screen" style="display: none;">
+                <h2>Quiz abgeschlossen</h2>
+                <div class="result-content">
+                    <div class="result-score">
+                        <span id="scoreDisplay" class="score-big">0/0</span>
+                        <p>richtige Antworten</p>
+                    </div>
+                    <div class="result-percentage">
+                        <span id="percentageDisplay">0%</span>
+                    </div>                    <div id="resultMessage" class="result-message"></div>                </div>
+                <div class="result-actions">
+                    <button id="restartBtn" class="btn btn-primary">
+                        <span class="btn-icon">↻</span>
+                        Wiederholen
+                    </button>
+                    <a href="../index.html" class="btn btn-secondary">Zur Übersicht</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="../js/play.js"></script>
+</body>
+</html>

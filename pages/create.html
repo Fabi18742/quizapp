@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz erstellen/bearbeiten</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>    <div class="container">
+        <header>
+            <h1 id="pageTitle">Quiz erstellen</h1>
+            <a href="../index.html" class="btn btn-secondary">
+                <span class="btn-icon">←</span>
+                Zurück
+            </a>
+        </header>
+
+        <main>
+            <form id="quizForm">
+                <!-- Quiz-Grunddaten -->
+                <div class="form-section">
+                    <h2>Quiz-Informationen</h2>
+                    
+                    <div class="form-group">
+                        <label for="quizTitle">Quiz-Titel *</label>
+                        <input type="text" id="quizTitle" required placeholder="z.B. Allgemeinwissen">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quizType">Quiz-Typ *</label>
+                        <select id="quizType" required>
+                            <option value="">Bitte wählen...</option>
+                            <option value="single-choice">Single-Choice (eine richtige Antwort)</option>
+                            <option value="multiple-choice">Multiple-Choice (mehrere richtige Antworten)</option>
+                            <option value="true-false">Wahr / Falsch</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fragen -->
+                <div class="form-section">
+                    <h2>Fragen</h2>
+                    <div id="questionsContainer">
+                        <!-- Fragen werden hier dynamisch eingefügt -->                </div>
+                    <button type="button" id="addQuestionBtn" class="btn btn-secondary">
+                        <span class="btn-icon">+</span>
+                        Frage hinzufügen
+                    </button>
+                </div>                <!-- Aktionen -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">✓</span>
+                        Speichern
+                    </button>
+                    <a href="../index.html" class="btn btn-secondary">Abbrechen</a>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="../js/create.js"></script>
+</body>
+</html>
