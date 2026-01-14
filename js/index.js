@@ -42,7 +42,7 @@ if (importPanelToggle && importPanel) {
 
 // Import confirm
 if (importConfirmBtn && importTextarea) {
-    importConfirmBtn.addEventListener('click', () => {
+    const performImport = () => {
         const text = importTextarea.value.trim();
         if (!text) return showToast('Bitte füge einen Export-String ein.', 'warning');
         try {
@@ -50,9 +50,30 @@ if (importConfirmBtn && importTextarea) {
             importTextarea.value = '';
             displayQuizzes();
             showToast(`${res.added} Quiz${res.added > 1 ? 'zes' : ''} erfolgreich importiert!`, 'success');
+            
+            // Import-Panel automatisch schließen
+            if (importPanel) {
+                importPanel.classList.remove('open');
+                if (importPanelToggle) {
+                    importPanelToggle.setAttribute('aria-expanded', 'false');
+                }
+            }
         } catch (err) {
             console.error(err);
             showToast('Fehler beim Import: ' + (err.message || err), 'error');
+        }
+    };
+    
+    // Click-Event für Button
+    importConfirmBtn.addEventListener('click', performImport);
+    
+    // Enter-Taste im Textarea
+    importTextarea.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+            e.stopPropagation();
+            performImport();
+            return false;
         }
     });
 }
@@ -124,20 +145,26 @@ function createQuizCard(quiz) {
         <div class="quiz-card-header">
             <div>
                 <h3 class="quiz-card-title">${escapeHtml(quiz.title)}</h3>
-                <div class="quiz-card-meta">
-                    <span class="quiz-card-type">${getQuizTypeLabel(quiz.type)}</span>
-                    <span class="quiz-card-questions">${questionCount} ${questionText}</span>
-                    ${timeChallengeBadge}
-                </div>
             </div>
+            <button class="btn btn-primary btn-icon-only quiz-edit-btn" onclick="editQuiz('${quiz.id}')" title="Bearbeiten">
+                <span class="icon-edit">⚙</span>
+            </button>
+        </div>
+        <div class="quiz-card-meta">
+            <span class="quiz-card-type">${getQuizTypeLabel(quiz.type)}</span>
+            <span class="quiz-card-questions">${questionCount} ${questionText}</span>
+            ${timeChallengeBadge}
         </div>
         <div class="quiz-card-actions">
-            <div class="quiz-card-actions-left">
-                <button class="btn btn-success btn-small" onclick="startQuiz('${quiz.id}')">Starten</button>
-                <button class="btn btn-primary btn-small" onclick="editQuiz('${quiz.id}')">Bearbeiten</button>
-                <button class="btn btn-danger btn-small" onclick="confirmDeleteQuiz('${quiz.id}', '${escapeHtml(quiz.title)}')">Löschen</button>
+            <button class="btn btn-success btn-small" onclick="startQuiz('${quiz.id}')">Starten</button>
+            <div class="quiz-card-actions-right">
+                <button class="btn btn-secondary btn-icon-only btn-subtle" onclick="exportQuizString('${quiz.id}')" title="Export">
+                    <span class="icon-export">↗</span>
+                </button>
+                <button class="btn btn-danger btn-icon-only btn-subtle" onclick="confirmDeleteQuiz('${quiz.id}', '${escapeHtml(quiz.title)}')" title="Löschen">
+                    <span class="icon-delete">🗑</span>
+                </button>
             </div>
-            <button class="btn btn-secondary btn-small" onclick="exportQuizString('${quiz.id}')">Export</button>
         </div>
     `;
     

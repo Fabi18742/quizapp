@@ -24,6 +24,7 @@ let currentQuiz = null;
 let currentQuestionIndex = 0;
 let userAnswers = [];
 let score = 0;
+let totalQuestionsAnswered = 0; // Zähler für alle beantworteten Fragen (für Fortschrittsbalken)
 
 // Timer-Variablen
 let timeChallengeMode = false;
@@ -62,6 +63,7 @@ function initializeQuiz() {
     // Fragen-Queue initialisieren (Indizes aller Fragen)
     questionQueue = currentQuiz.questions.map((_, index) => index);
     answeredCorrectly.clear();
+    totalQuestionsAnswered = 0;
     
     // Zeit-Challenge prüfen und initialisieren
     if (currentQuiz.timeChallenge && currentQuiz.timeChallenge.enabled) {
@@ -170,6 +172,26 @@ function showTimePenaltyAnimation(penalty) {
 }
 
 /**
+ * Visuelles Feedback für falsche Multiple-Choice-Antworten
+ */
+function showWrongAnswerFeedback() {
+    // Alle ausgewählten Antworten rot highlighten
+    const selectedOptions = answersContainer.querySelectorAll('.answer-option.selected');
+    selectedOptions.forEach(option => {
+        option.classList.add('wrong-answer');
+        setTimeout(() => {
+            option.classList.remove('wrong-answer');
+        }, 800);
+    });
+    
+    // Container schütteln
+    answersContainer.classList.add('shake-animation');
+    setTimeout(() => {
+        answersContainer.classList.remove('shake-animation');
+    }, 600);
+}
+
+/**
  * Game Over - Zeit abgelaufen
  */
 function gameOver() {
@@ -205,12 +227,18 @@ function showQuestion() {
     const actualQuestionIndex = questionQueue[0];
     const question = currentQuiz.questions[actualQuestionIndex];
     
-    // Fortschrittsbalken aktualisieren (basierend auf richtig beantworteten Fragen)
-    const progress = (answeredCorrectly.size / currentQuiz.questions.length) * 100;
-    progressFill.style.width = `${progress}%`;
-    
-    // Fragenzähler aktualisieren
-    questionCounter.textContent = `Frage ${answeredCorrectly.size + 1} von ${currentQuiz.questions.length} (${questionQueue.length} verbleibend)`;
+    // Fortschrittsbalken aktualisieren
+    if (timeChallengeMode) {
+        // Bei Zeit-Challenge: Basierend auf richtig beantworteten Fragen
+        const progress = (answeredCorrectly.size / currentQuiz.questions.length) * 100;
+        progressFill.style.width = `${progress}%`;
+        questionCounter.textContent = `Frage ${answeredCorrectly.size + 1} von ${currentQuiz.questions.length} (${questionQueue.length} verbleibend)`;
+    } else {
+        // Bei normalen Quizzen: Basierend auf Gesamtzahl beantworteter Fragen
+        const progress = (totalQuestionsAnswered / currentQuiz.questions.length) * 100;
+        progressFill.style.width = `${progress}%`;
+        questionCounter.textContent = `Frage ${totalQuestionsAnswered + 1} von ${currentQuiz.questions.length}`;
+    }
     
     // Fragetext anzeigen
     questionContainer.innerHTML = `
@@ -220,8 +248,8 @@ function showQuestion() {
     // Antworten anzeigen
     displayAnswers(question);
     
-    // Button-Text anpassen und bei Zeit-Challenge ausblenden
-    if (timeChallengeMode) {
+    // Button-Text anpassen und bei Zeit-Challenge oder True/False ausblenden
+    if (timeChallengeMode || currentQuiz.type === 'true-false') {
         nextBtn.style.display = 'none';
     } else {
         nextBtn.style.display = 'inline-flex';
@@ -289,7 +317,7 @@ function displayAnswers(question) {
 
 /**
  * True/False Antwort auswählen
- * @param {number} answerIndex - 0 für Falsch, 1 für Wahr
+ * @param {number} answerIndex - 0 für Wahr, 1 für Falsch
  */
 function toggleTrueFalseAnswer(answerIndex) {
     const boxes = answersContainer.querySelectorAll('.truefalse-box');
@@ -305,38 +333,10 @@ function toggleTrueFalseAnswer(answerIndex) {
     const input = selectedBox.querySelector('input');
     input.checked = true;
     
-    // Bei Zeit-Challenge: Automatisch weiter
-    if (timeChallengeMode) {
-        setTimeout(() => {
-            nextQuestion();
-        }, 300);
-    }
-}
-
-/**
- * True/False Antwort auswählen
- * @param {number} answerIndex - 0 für Falsch, 1 für Wahr
- */
-function toggleTrueFalseAnswer(answerIndex) {
-    const boxes = answersContainer.querySelectorAll('.truefalse-box');
-    
-    // Alle Boxen deselektieren
-    boxes.forEach(box => box.classList.remove('selected'));
-    
-    // Gewählte Box selektieren
-    const selectedBox = boxes[answerIndex];
-    selectedBox.classList.add('selected');
-    
-    // Radio-Input setzen
-    const input = selectedBox.querySelector('input');
-    input.checked = true;
-    
-    // Bei Zeit-Challenge: Automatisch weiter
-    if (timeChallengeMode) {
-        setTimeout(() => {
-            nextQuestion();
-        }, 300);
-    }
+    // Bei True/False immer automatisch weiter (mit kurzer Verzögerung für visuelles Feedback)
+    setTimeout(() => {
+        nextQuestion();
+    }, 300);
 }
 
 /**
@@ -407,6 +407,11 @@ function nextQuestion() {
     // Antwort speichern
     userAnswers[actualQuestionIndex] = selectedAnswers;
     
+    // In normalen Quizzen: Zähler erhöhen
+    if (!timeChallengeMode) {
+        totalQuestionsAnswered++;
+    }
+    
     if (isCorrect) {
         // Richtige Antwort
         answeredCorrectly.add(actualQuestionIndex);
@@ -418,6 +423,11 @@ function nextQuestion() {
         }
     } else {
         // Falsche Antwort
+        // Visuelles Feedback bei Multiple Choice
+        if (currentQuiz.type === 'multiple-choice') {
+            showWrongAnswerFeedback();
+        }
+        
         if (timeChallengeMode && currentQuiz.timeChallenge.repeatWrongQuestions) {
             // Frage hinten anstellen
             questionQueue.shift(); // Von vorne entfernen

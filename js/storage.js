@@ -340,6 +340,13 @@ function importQuizzesFromString(str) {
         title: nq.title || 'Untitled',
         type: nq.type || 'single-choice',
         questions: nq.questions || [],
+        timeChallenge: nq.timeChallenge || {
+            enabled: false,
+            initialTime: 60,
+            timeBonus: 5,
+            timePenalty: 3,
+            repeatWrongQuestions: true
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     }));
