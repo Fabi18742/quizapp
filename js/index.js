@@ -12,11 +12,19 @@ const importPanelToggle = document.getElementById('importPanelToggle');
 const importPanel = document.getElementById('importPanel');
 const importTextarea = document.getElementById('importTextarea');
 const importConfirmBtn = document.getElementById('importConfirmBtn');
+const sortSelect = document.getElementById('sortSelect');
 
 // Event Listeners
 createNewQuizBtn.addEventListener('click', () => {
     window.location.href = 'pages/create.html';
 });
+
+// Sortier-Select
+if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+        displayQuizzes();
+    });
+}
 
 // Export-All button
 if (exportAllBtn) {
@@ -77,6 +85,60 @@ if (importConfirmBtn && importTextarea) {
         }
     });
 }
+/**
+ * Quizzes sortieren
+ * @param {Array} quizzes - Array von Quiz-Objekten
+ * @param {string} sortBy - Sortierkriterium
+ * @returns {Array} Sortiertes Array
+ */
+function sortQuizzes(quizzes, sortBy) {
+    const sorted = [...quizzes]; // Kopie erstellen
+    
+    switch(sortBy) {
+        case 'date-desc':
+            // Neueste zuerst (Standard)
+            return sorted.reverse();
+            
+        case 'date-asc':
+            // Älteste zuerst
+            return sorted;
+            
+        case 'name-asc':
+            // Name A-Z
+            return sorted.sort((a, b) => a.title.localeCompare(b.title));
+            
+        case 'name-desc':
+            // Name Z-A
+            return sorted.sort((a, b) => b.title.localeCompare(a.title));
+            
+        case 'type':
+            // Nach Typ sortieren
+            const typeOrder = {
+                'single-choice': 1,
+                'single-choice-time': 2,
+                'multiple-choice': 3,
+                'multiple-choice-time': 4,
+                'true-false': 5,
+                'true-false-time': 6
+            };
+            return sorted.sort((a, b) => {
+                const orderA = typeOrder[a.type] || 999;
+                const orderB = typeOrder[b.type] || 999;
+                return orderA - orderB;
+            });
+            
+        case 'questions-desc':
+            // Meiste Fragen zuerst
+            return sorted.sort((a, b) => b.questions.length - a.questions.length);
+            
+        case 'questions-asc':
+            // Wenigste Fragen zuerst
+            return sorted.sort((a, b) => a.questions.length - b.questions.length);
+            
+        default:
+            return sorted;
+    }
+}
 
 /**
  * Alle Quizzes laden und anzeigen
@@ -91,6 +153,11 @@ function displayQuizzes() {
         return;
     }
     
+    // Sortierung anwenden
+    const sortSelect = document.getElementById('sortSelect');
+    const sortBy = sortSelect ? sortSelect.value : 'date-desc';
+    const sortedQuizzes = sortQuizzes(quizzes, sortBy);
+    
     // Quizzes anzeigen
     quizListElement.style.display = 'grid';
     emptyStateElement.style.display = 'none';
@@ -99,7 +166,7 @@ function displayQuizzes() {
     quizListElement.innerHTML = '';
     
     // Jedes Quiz als Card anzeigen
-    quizzes.forEach(quiz => {
+    sortedQuizzes.forEach(quiz => {
         const quizCard = createQuizCard(quiz);
         quizListElement.appendChild(quizCard);
     });

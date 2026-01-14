@@ -23,6 +23,18 @@
                 <button id="exportAllBtn" class="btn btn-secondary" title="Alle Quizzes exportieren">
                     Export All
                 </button>
+                <div class="sort-controls">
+                    <label for="sortSelect">Sortieren nach:</label>
+                    <select id="sortSelect" class="sort-select">
+                        <option value="date-desc">Neueste zuerst</option>
+                        <option value="date-asc">Älteste zuerst</option>
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="type">Typ</option>
+                        <option value="questions-desc">Meiste Fragen</option>
+                        <option value="questions-asc">Wenigste Fragen</option>
+                    </select>
+                </div>
             </div>
 
             <div id="quizList" class="quiz-list">
