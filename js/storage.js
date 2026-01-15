@@ -118,7 +118,6 @@ function showConfirm(message, title = 'Bestätigung', confirmText = 'Bestätigen
 function loadQuizzes() {
     try {
         const data = localStorage.getItem(STORAGE_KEY);
-        console.log(data ? JSON.parse(data) : [])
         return data ? JSON.parse(data) : [];
     } catch (error) {
         console.error('Fehler beim Laden der Quizzes:', error);
