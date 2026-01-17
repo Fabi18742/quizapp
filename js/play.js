@@ -209,6 +209,9 @@ function gameOver() {
     const percentage = Math.round((score / currentQuiz.questions.length) * 100);
     percentageDisplay.textContent = `${percentage}%`;
     resultMessage.innerHTML = `<strong style="color: var(--danger);">Zeit abgelaufen!</strong><br>Du hast ${score} von ${currentQuiz.questions.length} Fragen richtig beantwortet.`;
+    
+    // Detaillierte Fragenübersicht auch bei Game Over anzeigen
+    generateQuestionsReview();
 }
 
 /**
@@ -329,15 +332,29 @@ function toggleTrueFalseAnswer(answerIndex) {
     const boxes = answersContainer.querySelectorAll('.truefalse-box');
     
     // Alle Boxen deselektieren
-    boxes.forEach(box => box.classList.remove('selected'));
+    boxes.forEach(box => box.classList.remove('selected', 'correct-feedback', 'wrong-feedback'));
     
     // Gewählte Box selektieren
     const selectedBox = boxes[answerIndex];
-    selectedBox.classList.add('selected');
     
     // Radio-Input setzen
     const input = selectedBox.querySelector('input');
     input.checked = true;
+    
+    // Bei Zeitchallenge: Farb-Feedback, sonst nur blau
+    if (timeChallengeMode) {
+        const actualQuestionIndex = questionQueue[0];
+        const question = currentQuiz.questions[actualQuestionIndex];
+        const isCorrect = question.correctAnswers.includes(answerIndex);
+        
+        if (isCorrect) {
+            selectedBox.classList.add('correct-feedback');
+        } else {
+            selectedBox.classList.add('wrong-feedback');
+        }
+    } else {
+        selectedBox.classList.add('selected');
+    }
     
     // Bei True/False immer automatisch weiter (mit kurzer Verzögerung für visuelles Feedback)
     setTimeout(() => {
@@ -357,14 +374,25 @@ function toggleAnswer(answerIndex, inputType) {
     if (inputType === 'radio') {
         // Bei Radio: Alle anderen abwählen
         const allOptions = answersContainer.querySelectorAll('.answer-option');
-        allOptions.forEach(option => option.classList.remove('selected'));
+        allOptions.forEach(option => option.classList.remove('selected', 'correct-feedback', 'wrong-feedback'));
         
         // Diese auswählen
         answerOption.classList.add('selected');
         input.checked = true;
         
-        // Bei Zeit-Challenge und Radio (Single-Choice/True-False): Automatisch weiter
+        // Bei Zeit-Challenge: Sofort Feedback geben
         if (timeChallengeMode) {
+            const actualQuestionIndex = questionQueue[0];
+            const question = currentQuiz.questions[actualQuestionIndex];
+            const isCorrect = question.correctAnswers.includes(answerIndex);
+            
+            answerOption.classList.remove('selected');
+            if (isCorrect) {
+                answerOption.classList.add('correct-feedback');
+            } else {
+                answerOption.classList.add('wrong-feedback');
+            }
+            
             setTimeout(() => {
                 nextQuestion();
             }, 300); // Kurze Verzögerung für visuelles Feedback
@@ -372,11 +400,30 @@ function toggleAnswer(answerIndex, inputType) {
     } else {
         // Bei Checkbox: Togglen
         if (input.checked) {
-            answerOption.classList.remove('selected');
+            answerOption.classList.remove('selected', 'correct-feedback', 'wrong-feedback');
             input.checked = false;
         } else {
-            answerOption.classList.add('selected');
             input.checked = true;
+            
+            // Aktuelle Frage und Antwort prüfen
+            const actualQuestionIndex = questionQueue[0];
+            const question = currentQuiz.questions[actualQuestionIndex];
+            const isCorrect = question.correctAnswers.includes(answerIndex);
+            
+            if (timeChallengeMode) {
+                // Bei Zeitchallenge: Sofort Farb-Feedback (grün/rot)
+                if (isCorrect) {
+                    answerOption.classList.add('correct-feedback');
+                } else {
+                    answerOption.classList.add('wrong-feedback');
+                }
+            } else {
+                // Bei normalem Quiz: Blau (selected) mit rotem Hinweis bei falscher Antwort
+                answerOption.classList.add('selected');
+                if (!isCorrect) {
+                    answerOption.classList.add('wrong-feedback');
+                }
+            }
         }
     }
 }
@@ -503,6 +550,152 @@ function showResult() {
     }
     
     resultMessage.textContent = message;
+    
+    // Detaillierte Fragenübersicht generieren
+    generateQuestionsReview();
+}
+
+/**
+ * Detaillierte Übersicht aller Fragen mit Antworten generieren
+ */
+function generateQuestionsReview() {
+    const reviewList = document.getElementById('questionsReviewList');
+    reviewList.innerHTML = '';
+    
+    currentQuiz.questions.forEach((question, index) => {
+        const isCorrect = answeredCorrectly.has(index);
+        const userAnswerIndices = userAnswers[index] || [];
+        const questionType = question.type || currentQuiz.type;
+        
+        // Container für Frage
+        const questionItem = document.createElement('div');
+        questionItem.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+        
+        // Status-Icon
+        const statusIcon = isCorrect ? '✓' : '✗';
+        const statusClass = isCorrect ? 'status-correct' : 'status-incorrect';
+        
+        // Fragentext (max. 100 Zeichen, dann mit ... abkürzen)
+        const questionText = question.text;
+        const displayText = questionText.length > 100 ? questionText.substring(0, 100) + '...' : questionText;
+        const isLongQuestion = questionText.length > 100;
+        
+        // HTML für Frage
+        questionItem.innerHTML = `
+            <div class="review-header">
+                <span class="review-number">Frage ${index + 1}</span>
+                <span class="review-status ${statusClass}">${statusIcon}</span>
+            </div>
+            <div class="review-question ${isLongQuestion ? 'expandable collapsed' : ''}" data-full-text="${escapeHtml(questionText)}">
+                <div class="question-text-short">${escapeHtml(displayText)}</div>
+                ${isLongQuestion ? '<button class="expand-btn" onclick="toggleQuestion(this)">Mehr anzeigen</button>' : ''}
+            </div>
+            <div class="review-answers">
+                ${generateAnswersReview(question, userAnswerIndices, questionType)}
+            </div>
+        `;
+        
+        reviewList.appendChild(questionItem);
+    });
+}
+
+/**
+ * Generiert die Antwortübersicht für eine Frage
+ */
+function generateAnswersReview(question, userAnswerIndices, questionType) {
+    if (questionType === 'true-false') {
+        const correctAnswer = question.correctAnswers[0];
+        const userAnswer = userAnswerIndices[0];
+        const answers = ['Wahr', 'Falsch'];
+        
+        return `
+            <div class="answer-review-item">
+                <strong>Deine Antwort:</strong> 
+                <span class="${userAnswer === correctAnswer ? 'correct-answer' : 'wrong-answer'}">
+                    ${userAnswer !== undefined ? answers[userAnswer] : 'Keine Antwort'}
+                </span>
+            </div>
+            ${userAnswer !== correctAnswer ? `
+                <div class="answer-review-item">
+                    <strong>Richtige Antwort:</strong> 
+                    <span class="correct-answer">${answers[correctAnswer]}</span>
+                </div>
+            ` : ''}
+        `;
+    } else {
+        // Single-Choice oder Multiple-Choice
+        let html = '<div class="answer-list">';
+        
+        // Prüfen ob mindestens eine richtige Antwort ausgewählt wurde (Teilpunktzahl)
+        const hasAnyCorrectSelected = question.correctAnswers.some(correctIdx => 
+            userAnswerIndices.includes(correctIdx)
+        );
+        const hasAllCorrectSelected = question.correctAnswers.every(correctIdx => 
+            userAnswerIndices.includes(correctIdx)
+        );
+        const isPartiallyCorrect = hasAnyCorrectSelected && !hasAllCorrectSelected;
+        
+        question.answers.forEach((answer, index) => {
+            const isCorrect = question.correctAnswers.includes(index);
+            const wasSelected = userAnswerIndices.includes(index);
+            
+            let answerClass = '';
+            let icon = '';
+            
+            if (isCorrect && wasSelected) {
+                answerClass = 'correct-selected';
+                icon = '✓';
+            } else if (isCorrect && !wasSelected) {
+                // Wenn teilweise richtig, fehlende Antworten rot markieren
+                if (isPartiallyCorrect) {
+                    answerClass = 'missing-correct';
+                    icon = '✗';
+                } else {
+                    answerClass = 'correct-not-selected';
+                    icon = '✓';
+                }
+            } else if (!isCorrect && wasSelected) {
+                answerClass = 'wrong-selected';
+                icon = '✗';
+            } else {
+                answerClass = 'neutral';
+                icon = '';
+            }
+            
+            html += `
+                <div class="answer-review-option ${answerClass}">
+                    ${icon ? `<span class="answer-icon">${icon}</span>` : ''}
+                    <span class="answer-text">${escapeHtml(answer)}</span>
+                    ${isCorrect ? '<span class="correct-marker">(Richtige Antwort)</span>' : ''}
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        return html;
+    }
+}
+
+/**
+ * Toggle für lange Fragetexte
+ */
+function toggleQuestion(button) {
+    const reviewQuestion = button.parentElement;
+    const fullText = reviewQuestion.dataset.fullText;
+    const shortTextDiv = reviewQuestion.querySelector('.question-text-short');
+    
+    if (reviewQuestion.classList.contains('collapsed')) {
+        // Expandieren
+        reviewQuestion.classList.remove('collapsed');
+        shortTextDiv.innerHTML = fullText;
+        button.textContent = 'Weniger anzeigen';
+    } else {
+        // Kollabieren
+        reviewQuestion.classList.add('collapsed');
+        const displayText = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
+        shortTextDiv.innerHTML = displayText;
+        button.textContent = 'Mehr anzeigen';
+    }
 }
 
 /**

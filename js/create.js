@@ -91,11 +91,13 @@ timeChallengeCheckbox.addEventListener('change', () => {
         initialTimeInput.required = true;
         timeBonusInput.required = true;
         timePenaltyInput.required = true;
+        updateQuestionTypeOptions(true);
     } else {
         timeChallengeOptions.style.display = 'none';
         initialTimeInput.required = false;
         timeBonusInput.required = false;
         timePenaltyInput.required = false;
+        updateQuestionTypeOptions(false);
     }
 });
 
@@ -116,6 +118,11 @@ function addQuestion(questionData = null) {
     questionDiv.dataset.questionId = questionId;
 
     // Frage-Header mit Typ-Auswahl
+    // Multiple-Choice nur anzeigen, wenn Zeitchallenge nicht aktiv ist
+    const isTimeChallenge = timeChallengeCheckbox.checked;
+    const multipleChoiceOption = !isTimeChallenge ? 
+        `<option value="multiple-choice" ${questionType === 'multiple-choice' ? 'selected' : ''}>Multiple-Choice (mehrere richtige Antworten)</option>` : '';
+    
     const headerHtml = `
         <div class="question-header">
             <div class="question-title-row">
@@ -128,7 +135,7 @@ function addQuestion(questionData = null) {
                 <label>Fragentyp *</label>
                 <select class="question-type-select" data-question-id="${questionId}" required>
                     <option value="single-choice" ${questionType === 'single-choice' ? 'selected' : ''}>Single-Choice (eine richtige Antwort)</option>
-                    <option value="multiple-choice" ${questionType === 'multiple-choice' ? 'selected' : ''}>Multiple-Choice (mehrere richtige Antworten)</option>
+                    ${multipleChoiceOption}
                     <option value="true-false" ${questionType === 'true-false' ? 'selected' : ''}>Wahr / Falsch</option>
                 </select>
             </div>
@@ -162,6 +169,46 @@ function addQuestion(questionData = null) {
     typeSelect.addEventListener('change', (e) => {
         const newType = e.target.value;
         renderAnswersForQuestion(questionId, newType);
+    });
+}
+
+/**
+ * Fragentyp-Optionen basierend auf Zeit-Challenge Status aktualisieren
+ * @param {boolean} isTimeChallengeEnabled - Ist Zeit-Challenge aktiviert?
+ */
+function updateQuestionTypeOptions(isTimeChallengeEnabled) {
+    // Alle Fragentyp-Dropdowns finden
+    const typeSelects = document.querySelectorAll('.question-type-select');
+    
+    typeSelects.forEach(select => {
+        const multipleChoiceOption = select.querySelector('option[value="multiple-choice"]');
+        
+        if (isTimeChallengeEnabled) {
+            // Multiple-Choice Option entfernen
+            if (multipleChoiceOption) {
+                // Wenn aktuell Multiple-Choice ausgewählt ist, zu Single-Choice wechseln
+                if (select.value === 'multiple-choice') {
+                    select.value = 'single-choice';
+                    // Antworten neu rendern
+                    const questionId = select.dataset.questionId;
+                    renderAnswersForQuestion(questionId, 'single-choice');
+                }
+                multipleChoiceOption.remove();
+            }
+        } else {
+            // Multiple-Choice Option wieder hinzufügen, wenn sie nicht existiert
+            if (!multipleChoiceOption) {
+                const newOption = document.createElement('option');
+                newOption.value = 'multiple-choice';
+                newOption.textContent = 'Multiple-Choice (mehrere richtige Antworten)';
+                
+                // Nach Single-Choice einfügen
+                const singleChoiceOption = select.querySelector('option[value="single-choice"]');
+                if (singleChoiceOption) {
+                    singleChoiceOption.insertAdjacentElement('afterend', newOption);
+                }
+            }
+        }
     });
 }
 
