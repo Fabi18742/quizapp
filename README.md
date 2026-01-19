@@ -204,3 +204,4 @@ Dieses Projekt demonstriert:
 ## 👨‍💻 Entwicklung
 
 Das Projekt ist reines Frontend und benötigt keinen Build-Prozess. Einfach `index.html` im Browser öffnen und loslegen!
+https://dash.cloudflare.com/login
